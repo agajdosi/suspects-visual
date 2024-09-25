@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Most Conflicting Suspects and Questions</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background-color: #f4f4f4;
+        	background: linear-gradient(-45deg, #ee7752, #aa2e5d, #186d8c, #23d5ab);
+	        background-size: 400% 400%;
+	        animation: gradient 120s ease infinite;
+	        height: 100vh;
+            color: #ffffff;
+        }
+
+        @keyframes gradient {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        h1, h2 {
+            text-align: center;
+        }
+        .chart-container {
+            width: 80%;
+            margin: 30px auto;
+            padding: 20px;
+            box-shadow: 0 0 10px #ccc;
+        }
+        .bar-chart {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .bar {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+        }
+        .bar-label {
+            width: 200px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .bar-visual {
+            height: 25px;
+            background-color: #d72e2e;
+            text-align: right;
+            color: white;
+            line-height: 25px;
+            padding-right: 5px;
+        }
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 120px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%; /* Position above */
+            left: 50%;
+            margin-left: -60px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 12px;
+        }
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+
+<!-- 
+<div class="chart-container">
+    <h2>Top 10 Conflicting Suspects</h2>
+    <div id="suspects-chart" class="bar-chart"></div>
+</div>
+-->
+
+<div class="chart-container">
+    <!-- 
+    <h2>Conflicting Questions</h2>
+    -->
+    <div id="questions-chart" class="bar-chart"></div>
+</div>
+
+<script>
+    // Function to create bar charts
+    function createBarChart(data, chartId, labelKey, valueKey) {
+        const chart = document.getElementById(chartId);
+        const maxValue = Math.max(...data.map(item => item[valueKey]));
+
+        data.forEach(item => {
+            const barContainer = document.createElement('div');
+            barContainer.className = 'bar';
+
+            const label = document.createElement('div');
+            label.className = 'bar-label';
+            label.textContent = item[labelKey];
+
+            const bar = document.createElement('div');
+            bar.className = 'bar-visual';
+            const barWidth = (item[valueKey] / maxValue) * 100;
+            bar.style.width = barWidth + '%';
+            bar.textContent = item[valueKey];
+
+            barContainer.appendChild(label);
+            barContainer.appendChild(bar);
+            chart.appendChild(barContainer);
+        });
+    }
+
+    // Fetch and display conflicting suspects
+    fetch('http://localhost:10161/suspects/conflicting')
+        .then(response => response.json())
+        .then(data => {
+            // Map data to include meaningful labels
+            const formattedData = data.map(item => ({
+                label: 'Suspect ' + item.uuid.slice(0, 6),
+                conflicting_count: item.conflicting_count
+            }));
+            createBarChart(formattedData, 'suspects-chart', 'label', 'conflicting_count');
+        })
+        .catch(error => console.error('Error fetching suspects data:', error));
+
+    // Fetch and display conflicting questions
+    fetch('http://localhost:10161/questions/conflicting')
+        .then(response => response.json())
+        .then(data => {
+            const formattedData = data.map(item => ({
+                label: item.question,
+                conflicting_count: item.conflicting_count
+            }));
+            createBarChart(formattedData, 'questions-chart', 'label', 'conflicting_count');
+        })
+        .catch(error => console.error('Error fetching questions data:', error));
+</script>
+
+</body>
+</html>
