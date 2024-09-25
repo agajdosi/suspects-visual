@@ -4,15 +4,20 @@
     <meta charset="UTF-8">
     <title>Most Conflicting Suspects and Questions</title>
     <style>
+        html {
+            margin: 0;
+            padding: 0;
+        }
         body {
             font-family: Arial, sans-serif;
-            margin: 40px;
             background-color: #f4f4f4;
             background: linear-gradient(-45deg, #ee7752, #aa2e5d, #186d8c, #23d5ab);
             background-size: 400% 400%;
             animation: gradient 120s ease infinite;
             height: 100vh;
             color: #ffffff;
+            margin: 0;
+            padding: 0;
         }
 
         @keyframes gradient {
@@ -34,71 +39,54 @@
             width: 80%;
             margin: 30px auto;
             padding: 20px;
-            box-shadow: 0 0 10px #ccc;
+            box-shadow: 0 0 10px #ffffff;
         }
         .bar-chart {
             display: flex;
             flex-direction: column;
             align-items: flex-start;
         }
-        .bar {
+        .question {
             display: flex;
             align-items: center;
+            justify-content: space-between;
             margin: 5px 0;
+            width: 100%;
         }
         .bar-label {
-            width: 200px;
+            min-width: 400px;
+            width: 400px;
             font-weight: bold;
             margin-right: 10px;
+            color: #ffffff;
         }
         .bar-visual {
             height: 25px;
-            background-color: #d72e2e;
             text-align: right;
             color: white;
             line-height: 25px;
             padding-right: 5px;
-        }
-        .tooltip {
             position: relative;
-            display: inline-block;
+            width: 100%;
         }
-        .tooltip .tooltip-text {
-            visibility: hidden;
-            width: 120px;
-            background-color: #333;
-            color: #fff;
-            text-align: center;
-            border-radius: 6px;
-            padding: 5px;
+        .bar-visual span {
             position: absolute;
-            z-index: 1;
-            bottom: 125%; /* Position above */
-            left: 50%;
-            margin-left: -60px;
-            opacity: 0;
-            transition: opacity 0.3s;
-            font-size: 12px;
+            left: 5px;
+            top: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
         }
-        .tooltip:hover .tooltip-text {
-            visibility: visible;
-            opacity: 1;
+        .barValue {
+            background-color: #d72e2e;
+            height: 30px;
         }
     </style>
 </head>
 <body>
 
-<!-- 
 <div class="chart-container">
-    <h2>Top 10 Conflicting Suspects</h2>
-    <div id="suspects-chart" class="bar-chart"></div>
-</div>
--->
-
-<div class="chart-container">
-    <!-- 
-    <h2>Conflicting Questions</h2>
-    -->
     <div id="questions-chart" class="bar-chart"></div>
 </div>
 
@@ -107,11 +95,14 @@
     function createBarChart(data, chartId, labelKey, valueKey) {
         const chart = document.getElementById(chartId);
         chart.innerHTML = ''; // Clear existing content
+        
+        // Find the maximum conflicting_count
         const maxValue = Math.max(...data.map(item => item[valueKey]));
 
         data.forEach(item => {
+            console.log(item);
             const barContainer = document.createElement('div');
-            barContainer.className = 'bar';
+            barContainer.className = 'question';
 
             const label = document.createElement('div');
             label.className = 'bar-label';
@@ -119,53 +110,43 @@
 
             const bar = document.createElement('div');
             bar.className = 'bar-visual';
-            const barWidth = (item[valueKey] / maxValue) * 100;
-            bar.style.width = barWidth + '%';
-            bar.textContent = item[valueKey];
 
+            const barValue = document.createElement('div');
+            const barWidth = (item[valueKey] / maxValue) * 100; // Calculate width as percentage of maxValue
+            barValue.style.width = barWidth + '%';
+            barValue.className = "barValue";
+
+            const valueText = document.createElement('span');
+            valueText.textContent = item[valueKey];
+            
+            bar.appendChild(valueText);
+            bar.appendChild(barValue);
             barContainer.appendChild(label);
             barContainer.appendChild(bar);
+            
             chart.appendChild(barContainer);
         });
     }
 
-    // Function to fetch and display conflicting suspects
-    function fetchConflictingSuspects() {
-        fetch('http://localhost:10161/suspects/conflicting')
-            .then(response => response.json())
-            .then(data => {
-                // Map data to include meaningful labels
-                const formattedData = data.map(item => ({
-                    label: 'Suspect ' + item.uuid.slice(0, 6),
-                    conflicting_count: item.conflicting_count
-                }));
-                createBarChart(formattedData, 'suspects-chart', 'label', 'conflicting_count');
-            })
-            .catch(error => console.error('Error fetching suspects data:', error));
-    }
-
     // Function to fetch and display conflicting questions
     function fetchConflictingQuestions() {
-        fetch('http://localhost:10161/questions/conflicting')
+        fetch('http://192.168.1.104:10161/questions/conflicting')
             .then(response => response.json())
             .then(data => {
                 const formattedData = data.map(item => ({
                     label: item.question,
-                    conflicting_count: item.conflicting_count
+                    wrong_eliminations: item.wrong_eliminations
                 }));
-                createBarChart(formattedData, 'questions-chart', 'label', 'conflicting_count');
+                createBarChart(formattedData, 'questions-chart', 'label', 'wrong_eliminations');
             })
             .catch(error => console.error('Error fetching questions data:', error));
     }
 
     // Initial fetch and display
-    // fetchConflictingSuspects(); // Uncomment if you want to fetch suspects data
     fetchConflictingQuestions();
 
-    // Refetch the data every 10 seconds (10000 milliseconds)
-    // setInterval(fetchConflictingSuspects, 10000); // Uncomment if you want to refetch suspects data
-    setInterval(fetchConflictingQuestions, 10000);
-
+    // Refetch the data every 60 seconds (60000 milliseconds)
+    setInterval(fetchConflictingQuestions, 60000);
 </script>
 
 </body>
