@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Most Conflicting Suspects and Questions</title>
+    <title>Most Disagreed Questions</title>
     <style>
         html {
             margin: 0;
@@ -87,11 +87,20 @@
 <body>
 
 <div class="chart-container">
-    <h1>Most conflicting questions</h1>
+    <h1 id="title">Most Disagreed Questions</h1>
     <div id="questions-chart" class="bar-chart"></div>
 </div>
 
 <script>
+    let currentLanguage = 'english';
+    const languages = ['english', 'czech', 'polish'];
+    const titles = [
+        'Most Disagreed Questions',
+        'Nejvíce sporné otázky',
+        'Najbardziej sporne pytania'
+    ];
+    let languageIndex = 0;
+
     // Function to create bar charts
     function createBarChart(data, chartId, labelKey, valueKey) {
         const chart = document.getElementById(chartId);
@@ -101,7 +110,6 @@
         const maxValue = Math.max(...data.map(item => item[valueKey]));
 
         data.forEach(item => {
-            console.log(item);
             const barContainer = document.createElement('div');
             barContainer.className = 'question';
 
@@ -135,19 +143,29 @@
             .then(response => response.json())
             .then(data => {
                 const formattedData = data.map(item => ({
-                    label: item.question,
+                    english: item.english,
+                    czech: item.czech,
+                    polish: item.polish,
                     wrong_eliminations: item.wrong_eliminations
                 }));
-                createBarChart(formattedData, 'questions-chart', 'label', 'wrong_eliminations');
+                createBarChart(formattedData, 'questions-chart', currentLanguage, 'wrong_eliminations');
             })
             .catch(error => console.error('Error fetching questions data:', error));
+    }
+
+    // Function to switch language every 20 seconds
+    function switchLanguage() {
+        languageIndex = (languageIndex + 1) % languages.length;
+        document.getElementById('title').textContent = titles[languageIndex];
+        currentLanguage = languages[languageIndex];
+        fetchConflictingQuestions();
     }
 
     // Initial fetch and display
     fetchConflictingQuestions();
 
-    // Refetch the data every 5 seconds (5000 milliseconds)
-    setInterval(fetchConflictingQuestions, 5000);
+    // Switch language every 20 seconds (20000 milliseconds)
+    setInterval(switchLanguage, 1000);
 </script>
 
 </body>
